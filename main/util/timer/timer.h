@@ -78,6 +78,11 @@ class timer : esp32::noncopyable
         CHECK_THROW_ESP(esp_timer_start_periodic(timer_handle_, period.count()));
     }
 
+    inline void restart(const std::chrono::microseconds &period)
+    {
+        CHECK_THROW_ESP(esp_timer_restart(timer_handle_, period.count()));
+    }
+
     /**
      * @brief Stop the previously started timer.
      *

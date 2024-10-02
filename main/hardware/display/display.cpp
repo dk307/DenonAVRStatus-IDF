@@ -48,6 +48,16 @@ void display::begin()
     set_display_value(FourChars{'R', 'i', 's', 'e'});
 }
 
+void display::start_display(const std::array<const void *, 4> &values, bool turn_off)
+{
+    set_atleast_default_brightness();
+    set_max7219_display(values);
+    if (turn_off)
+    {
+        restart_display_off_timer();
+    }
+}
+
 void display::update_display_based_on_display_value()
 {
     const auto current_display_value = display_value_.load();
@@ -63,42 +73,51 @@ void display::update_display_based_on_display_value()
     }
     else if (std::holds_alternative<FourChars>(current_display_value))
     {
-        set_atleast_default_brightness();
-
         auto &&four_chars = std::get<FourChars>(current_display_value);
         ESP_LOGI(DISPLAY_TAG, "Setting display to %s", reinterpret_cast<const char *>(four_chars.value.data()));
-
         const auto display_values = get_display_led_bits(four_chars.value);
-        set_max7219_display(display_values);
-        restart_display_off_timer();
+        start_display(display_values, true);
     }
     else if (std::holds_alternative<MuteOn>(current_display_value))
     {
-        set_atleast_default_brightness();
-
         ESP_LOGI(DISPLAY_TAG, "Setting Mute On");
 
         constexpr static uint64_t muteon_led_bits[] = {
-            0x4266241818246642,
-            0x03073f3f3f3f0703,
+            0x636363636b7f7763,
+            0x3f333333b3000000,
+            0xc646c646df060606,
+            0xfbc8cbfac3c0c0c0,
         };
         constexpr std::array<const void *, 4> display_values{
             &muteon_led_bits[0],
             &muteon_led_bits[1],
-            &muteon_led_bits[0],
-            &muteon_led_bits[1],
+            &muteon_led_bits[2],
+            &muteon_led_bits[3],
         };
 
-        set_max7219_display(display_values);
+        start_display(display_values, false);
+    }
+    else if (std::holds_alternative<PowerOff>(current_display_value))
+    {
+        ESP_LOGI(DISPLAY_TAG, "Setting Poweroff");
+
+        constexpr static uint64_t bits[] = {
+            0xc0606060606060c0,
+            0x636666e6e66666e3,
+            0x606060e3e36060e7,
+            0x0000000303000007,
+        };
+        constexpr std::array<const void *, 4> display_values{
+            &bits[0],
+            &bits[1],
+            &bits[2],
+            &bits[3],
+        };
+
+        start_display(display_values, true);
     }
     else if (std::holds_alternative<DynVol>(current_display_value))
     {
-        set_atleast_default_brightness();
-
-        auto && dyn_vol = std::get<DynVol>(current_display_value);
-
-        ESP_LOGI(DISPLAY_TAG, "Setting Dynamic Volume:%d", dyn_vol.value);
-
         // condensed "DynVol"
         constexpr static uint64_t dyn_vol_led_bits[] = {
             0xe789e9a9a9090907,
@@ -113,6 +132,9 @@ void display::update_display_based_on_display_value()
             0x3c3c3c3cff7e3c18,
         };
 
+        auto &&dyn_vol = std::get<DynVol>(current_display_value);
+        ESP_LOGI(DISPLAY_TAG, "Setting Dynamic Volume:%d", dyn_vol.value);
+
         std::array<const void *, 4> display_values{
             &dyn_vol_led_bits[0],
             &dyn_vol_led_bits[1],
@@ -120,8 +142,7 @@ void display::update_display_based_on_display_value()
             &dyn_vol_level_led_bits[dyn_vol.value],
         };
 
-        set_max7219_display(display_values);
-        restart_display_off_timer();
+        start_display(display_values, true);
     }
 }
 
@@ -317,8 +338,9 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
         constexpr static std::string_view mute_on_command("MUON");
         constexpr static std::string_view mute_off_command("MUOFF");
         constexpr static std::string_view volume_prefix_command("MV");
-        constexpr static std::string_view volume_max_prefix_command("MVMAX");
         constexpr static std::string_view dynvol_prefix_command("PSDYNVOL");
+        constexpr static std::string_view off_prefix_command("PWSTANDBY");
+        constexpr static std::string_view on_prefix_command("PWON");
         if (feedback_string == mute_on_command)
         {
             set_display_value(MuteOn());
@@ -327,8 +349,17 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
         {
             set_display_value(None());
         }
+        else if (feedback_string == off_prefix_command)
+        {
+            set_display_value(PowerOff());
+        }
+        else if (feedback_string == on_prefix_command)
+        {
+            set_display_value(FourChars({' ', 'O', 'N', ' '}));
+        }
         else if (feedback_string.starts_with(volume_prefix_command))
         {
+            constexpr static std::string_view volume_max_prefix_command("MVMAX");
             if (!feedback_string.starts_with(volume_max_prefix_command))
             {
                 const auto volume_string = feedback_string.substr(volume_prefix_command.size());

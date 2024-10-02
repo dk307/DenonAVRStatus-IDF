@@ -55,7 +55,7 @@ void denon_avr::uart_task()
             uart_event_t event{};
             if (xQueueReceive(uart_queue, &event, portMAX_DELAY))
             {
-                ESP_LOGI(DENON_AVR_TAG, "uart event:%d", event.type);
+                ESP_LOGD(DENON_AVR_TAG, "uart event:%d", event.type);
                 switch (event.type)
                 {
                 // Event of UART receiving data

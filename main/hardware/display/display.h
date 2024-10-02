@@ -47,9 +47,12 @@ class display final : public esp32::singleton<display>
     {
         uint8_t value;
     } DynVol;
+    typedef struct PowerOff
+    {
+    } PowerOff;
 
     // one of these state
-    std::atomic<std::variant<None, FourChars, MuteOn, DynVol>> display_value_{None()};
+    std::atomic<std::variant<None, FourChars, MuteOn, DynVol, PowerOff>> display_value_{None()};
 
     std::unique_ptr<esp32::timer::timer> display_off_timer_;
     std::unique_ptr<esp32::timer::timer> display_fade_timer_;
@@ -72,6 +75,7 @@ class display final : public esp32::singleton<display>
     void set_atleast_default_brightness();
     void set_max7219_brightness(uint8_t value);
     void set_max7219_display(const std::array<const void *, 4> &values);
+    void start_display(const std::array<const void *, 4> &values, bool turn_off);
 
     constexpr static uint32_t set_display_changed_bit = BIT(2);
     constexpr static uint32_t fade_display_bit = BIT(3);

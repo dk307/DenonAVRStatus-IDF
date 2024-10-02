@@ -1,5 +1,6 @@
 #include "app_events.h"
 #include "hardware/display/display.h"
+#include "hardware/uart/denon_avr.h"
 #include "logging/logging_tags.h"
 #include "sdkconfig.h"
 #include "util/default_event.h"
@@ -18,17 +19,13 @@ extern "C" void app_main(void)
     {
         CHECK_THROW_ESP(esp_event_loop_create_default());
 
-        auto &display = display::create_instance();
+        auto &denon_avr = denon_avr::create_instance();
+        auto &display = display::create_instance(denon_avr);
 
         display.begin();
+        denon_avr.begin();
 
         CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, APP_INIT_DONE));
-
-        for (auto i = 0; i <= 99; i++)
-        {
-            display.set_volume(i);
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
 
         ESP_LOGI(OPERATIONS_TAG, "Main task is done");
     }

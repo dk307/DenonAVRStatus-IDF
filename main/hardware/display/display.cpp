@@ -45,12 +45,23 @@ void display::begin()
     CHECK_THROW_ESP(gui_task_.spawn_pinned("gui", 1024 * 6, esp32::task::default_priority, esp32::display_core));
     ESP_LOGI(DISPLAY_TAG, "Display setup done");
 
-    set_display_value(FourChars{'R', 'i', 's', 'e'});
+    set_display_value(FourChars{'B', 'o', 'o', 't'});
+
+    button_config_t gpio_btn_cfg{};
+
+    gpio_btn_cfg.type = BUTTON_TYPE_GPIO;
+    gpio_btn_cfg.long_press_time = CONFIG_BUTTON_LONG_PRESS_TIME_MS;
+    gpio_btn_cfg.short_press_time = CONFIG_BUTTON_SHORT_PRESS_TIME_MS;
+    gpio_btn_cfg.gpio_button_config.gpio_num = 23;
+    gpio_btn_cfg.gpio_button_config.active_level = 0;
+    button_ = iot_button_create(&gpio_btn_cfg);
+
+    CHECK_THROW_ESP(iot_button_register_cb(button_, BUTTON_SINGLE_CLICK, button_event_callback<&display::button_click>, this));
 }
 
 void display::start_display(const std::array<const void *, 4> &values, bool turn_off)
 {
-    set_atleast_default_brightness();
+    set_default_brightness();
     set_max7219_display(values);
     if (turn_off)
     {
@@ -70,6 +81,18 @@ void display::update_display_based_on_display_value()
         display_fade_timer_ =
             std::make_unique<esp32::timer::timer>([this] { xTaskNotify(gui_task_.handle(), fade_display_bit, eSetBits); }, "display_fade_timer");
         display_fade_timer_->start_periodic(fade_interval_delay_);
+    }
+    else if (std::holds_alternative<ScreenBrightnessLevel>(current_display_value))
+    {
+        constexpr static uint64_t all_on = 0xffffffffffffffff;
+        constexpr std::array<const void *, 4> display_values{
+            &all_on,
+            &all_on,
+            &all_on,
+            &all_on,
+        };
+
+        start_display(display_values, true);
     }
     else if (std::holds_alternative<FourChars>(current_display_value))
     {
@@ -258,11 +281,12 @@ void display::restart_display_off_timer()
     }
 }
 
-void display::set_atleast_default_brightness()
+void display::set_default_brightness()
 {
-    if (current_brightness_ < default_brightness_)
+    const auto default_brightness = config_.get_screen_brightness();
+    if (current_brightness_ != default_brightness)
     {
-        set_max7219_brightness(default_brightness_);
+        set_max7219_brightness(default_brightness);
     }
 }
 
@@ -278,7 +302,7 @@ void display::gui_task()
 
     try
     {
-        set_max7219_brightness(default_brightness_);
+        set_default_brightness();
         CHECK_THROW_ESP(max7219_clear(&handle_));
 
         do
@@ -289,7 +313,16 @@ void display::gui_task()
                             &notification_value, /* Stores the notified value. */
                             portMAX_DELAY);
 
-            if (notification_value & set_display_changed_bit)
+            if (notification_value & button_clicked_display_bit)
+            {
+                const auto current = config_.get_screen_brightness();
+                const auto new_value = (current + 1) % 16;
+                config_.set_screen_brightness(new_value);
+                ESP_LOGI(DISPLAY_TAG, "Setting screen brightness to %d", new_value);
+                set_display_value(ScreenBrightnessLevel(new_value));
+                update_display_based_on_display_value();
+            }
+            else if (notification_value & set_display_changed_bit)
             {
                 update_display_based_on_display_value();
             }
@@ -406,4 +439,10 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
         break;
     }
     }
+}
+
+void display::button_click()
+{
+    ESP_LOGI(DISPLAY_TAG, "Button clicked");
+    xTaskNotify(gui_task_.handle(), button_clicked_display_bit, eSetBits);
 }

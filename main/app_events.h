@@ -11,4 +11,6 @@ typedef enum
 
     NEW_FEEDBACK_RECEIVED,
 
+    CONFIG_CHANGE,
+
 } esp_app_common_event_t;

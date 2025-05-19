@@ -6,13 +6,13 @@
         "OPENOCD_SCRIPTS": "/root/.espressif/tools/openocd-esp32/v0.12.0-esp32-20240318/openocd-esp32/share/openocd/scripts",
         "ESP_ROM_ELF_DIR": "/root/.espressif/tools/esp-rom-elfs/20240305/"
     },
-    "idf.espIdfPath": "/root/esp/v5.3.1/esp-idf",
+    "idf.espIdfPath": "/home/deepak/esp/v5.4.1/esp-idf",
     "idf.openOcdConfigs": [
         "board/esp32-wrover-kit-3.3v.cfg"
     ],
     "idf.port": "/dev/ttyACM0",
     "idf.pythonBinPath": "/root/.espressif/python_env/idf5.3_py3.10_env/bin/python",
-    "idf.toolsPath": "/root/.espressif",
+    "idf.toolsPath": "/home/deepak/.espressif",
     "files.associations": {
         "limits": "cpp",
         "variant": "cpp",
@@ -87,8 +87,10 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "format": "cpp"
     },
     "idf.flashType": "UART",
-    "idf.gitPath": "git"
+    "idf.gitPath": "git",
+    "idf.pythonInstallPath": "/usr/bin/python3"
 }

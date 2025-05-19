@@ -2,7 +2,7 @@
 
 #include "app_events.h"
 #include "config/config_manager.h"
-#include "hardware/uart/denon_avr.h"
+#include "hardware/uart/onkyo_avr.h"
 #include "util/default_event.h"
 #include "util/semaphore_lockable.h"
 #include "util/singleton.h"
@@ -24,14 +24,14 @@ class display final : public esp32::singleton<display>
     }
 
   private:
-    display(config &config, denon_avr &denon_avr) : config_(config), denon_avr_(denon_avr), gui_task_([this] { display::gui_task(); })
+    display(config &config, avr &avr) : config_(config), avr_(avr), gui_task_([this] { display::gui_task(); })
     {
     }
 
     friend class esp32::singleton<display>;
 
     config &config_;
-    denon_avr &denon_avr_;
+    avr &avr_;
     esp32::task gui_task_;
     max7219_t handle_{};
 

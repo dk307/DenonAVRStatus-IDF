@@ -1,7 +1,7 @@
 #include "app_events.h"
 #include "config/config_manager.h"
 #include "hardware/display/display.h"
-#include "hardware/uart/denon_avr.h"
+#include "hardware/uart/onkyo_avr.h"
 #include "logging/logging_tags.h"
 #include "nvs.h"
 #include "sdkconfig.h"
@@ -16,7 +16,7 @@ ESP_EVENT_DEFINE_BASE(APP_COMMON_EVENT);
 extern "C" void app_main(void)
 {
     ESP_LOGI(OPERATIONS_TAG, "Starting ....");
-    esp_log_level_set("*", ESP_LOG_WARN);
+    esp_log_level_set("*", ESP_LOG_DEBUG);
 
     try
     {
@@ -31,12 +31,12 @@ extern "C" void app_main(void)
         CHECK_THROW_ESP(esp_event_loop_create_default());
 
         auto &config = config::create_instance();
-        auto &denon_avr = denon_avr::create_instance();
-        auto &display = display::create_instance(config, denon_avr);
+        auto &avr = avr::create_instance();
+        auto &display = display::create_instance(config, avr);
 
         config.begin();
         display.begin();
-        denon_avr.begin();
+        avr.begin();
 
         CHECK_THROW_ESP(esp32::event_post(APP_COMMON_EVENT, APP_INIT_DONE));
 

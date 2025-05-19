@@ -1,4 +1,4 @@
-#include "denon_avr.h"
+#include "onkyo_avr.h"
 #include "driver/gpio.h"
 #include "driver/uart.h"
 #include "logging/logging_tags.h"
@@ -16,7 +16,7 @@ constexpr static char PATTERN_CHAR = 0x0D;
 constexpr static size_t PATTERN_SIZE = 1;
 constexpr static uart_port_t UART_SEL = UART_NUM_2;
 
-void denon_avr::begin()
+void avr::begin()
 {
     ESP_LOGI(DENON_AVR_TAG, "Initializing UART");
 
@@ -36,17 +36,17 @@ void denon_avr::begin()
     CHECK_THROW_ESP(uart_set_pin(UART_SEL, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
     uart_set_mode(UART_SEL, UART_MODE_UART);
-    ESP_LOGI(DENON_AVR_TAG, "Setting up denon_avr");
+    ESP_LOGI(DENON_AVR_TAG, "Setting up avr");
 
     CHECK_THROW_ESP(uart_task_.spawn_pinned("uart", 1024 * 8, esp32::task::default_priority, esp32::uart_core));
-    ESP_LOGI(DENON_AVR_TAG, "denon_avr setup done");
+    ESP_LOGI(DENON_AVR_TAG, "avr setup done");
 }
 
-void denon_avr::uart_task()
+void avr::uart_task()
 {
     std::vector<char> read_data(512);
 
-    ESP_LOGI(DENON_AVR_TAG, "Start to run denon_avr Task on core:%d", xPortGetCoreID());
+    ESP_LOGI(DENON_AVR_TAG, "Start to run avr Task on core:%d", xPortGetCoreID());
     try
     {
         while (true)

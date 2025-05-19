@@ -360,7 +360,7 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
     case APP_INIT_DONE:
         break;
     case NEW_FEEDBACK_RECEIVED: {
-        const auto feedback_string = denon_avr_.get_last_feedback();
+        const auto feedback_string = avr_.get_last_feedback();
 
         if (feedback_string.empty())
         {
@@ -368,9 +368,9 @@ void display::app_event_handler(esp_event_base_t, int32_t event, void *data)
             break;
         }
 
-        constexpr static std::string_view mute_on_command("MUON");
-        constexpr static std::string_view mute_off_command("MUOFF");
-        constexpr static std::string_view volume_prefix_command("MV");
+        constexpr static std::string_view mute_on_command("AMT00");
+        constexpr static std::string_view mute_off_command("AMT01");
+        constexpr static std::string_view volume_prefix_command("MVL");
         constexpr static std::string_view dynvol_prefix_command("PSDYNVOL");
         constexpr static std::string_view off_prefix_command("PWSTANDBY");
         constexpr static std::string_view on_prefix_command("PWON");

@@ -9,7 +9,7 @@
 #include "util/timer/timer.h"
 #include <variant>
 
-class denon_avr final : public esp32::singleton<denon_avr>
+class avr final : public esp32::singleton<avr>
 {
   public:
     void begin();
@@ -19,11 +19,11 @@ class denon_avr final : public esp32::singleton<denon_avr>
     }
 
   private:
-    denon_avr() : uart_task_([this] { denon_avr::uart_task(); })
+    avr() : uart_task_([this] { avr::uart_task(); })
     {
     }
 
-    friend class esp32::singleton<denon_avr>;
+    friend class esp32::singleton<avr>;
 
     esp32::task uart_task_;
     QueueHandle_t uart_queue;
